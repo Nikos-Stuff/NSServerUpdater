@@ -6,7 +6,7 @@
 
   <groupId>nsj</groupId>
   <artifactId>nsj</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>NSServerUpdater</name>
