@@ -1,4 +1,4 @@
-name: Java CI with Maven
+name: Build
 
 on:
   push:
@@ -20,11 +20,8 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-    - name: Rename JAR file
-      run: |
-        mv target/*.jar target/nsj_dev.jar
-    - name: Upload artifact
+    - name: Upload all JAR files
       uses: actions/upload-artifact@v3
       with:
-        name: nsj_dev
-        path: target/nsj_dev.jar
+        name: jars
+        path: target/*.jar
