@@ -1,0 +1,4 @@
+name: NSServerUpdater
+version: '${project.version}'
+main: nsj.nsj.NSServerUpdater
+api-version: '1.20'
