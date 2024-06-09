@@ -17,7 +17,7 @@ public final class NSServerUpdater extends JavaPlugin {
         // Get the path to the root directory of the server
         Path serverDir = Paths.get("").toAbsolutePath();
 
-        String downloadUrl = "https://api.nikostuff.com/v1/latest_jar?download";
+        String downloadUrl = "https://api.nikostuff.com/v1/get_jar/purpur?getlatest";
         String fileName = serverDir.resolve("server_u.jar").toString();
 
         try {
