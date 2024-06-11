@@ -26,7 +26,7 @@ public final class NSServerUpdater extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         // Enable and load configuration
-        getLogger().info("NSServerUpdater will take care of your server_u.jar!");
+        getLogger().info("Configuration loaded!");
 
         // Get the path to the root directory of the server
         Path serverDir = Paths.get("").toAbsolutePath();
