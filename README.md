@@ -1,6 +1,6 @@
-# Simple Server JAR Updater
+# NS Server Updater 
 
-Welcome to the **Simple Server JAR Updater**! This tool makes updating your Minecraft server JAR files effortless, ensuring you always have the latest version with just a few simple steps.
+This tool makes updating your Minecraft server JAR files effortless, ensuring you always have the latest version with just a few simple steps.
 
 ## Features
 
