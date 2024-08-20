@@ -6,7 +6,7 @@
 
   <groupId>nsj</groupId>
   <artifactId>nsj</artifactId>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.3-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>NSServerUpdater</name>
@@ -64,7 +64,7 @@
       <dependency>
           <groupId>io.papermc.paper</groupId>
           <artifactId>paper-api</artifactId>
-          <version>1.20.6-R0.1-SNAPSHOT</version>
+          <version>1.21.1-R0.1-SNAPSHOT</version>
           <scope>provided</scope>
       </dependency>
   </dependencies>
