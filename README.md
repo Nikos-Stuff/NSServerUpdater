@@ -18,6 +18,7 @@ This tool makes updating your Minecraft server JAR files effortless, ensuring yo
 
 | Version    | Status         |
 |------------|----------------|
+| 1.21.x     | Fully supported|
 | 1.20.x     | Fully supported|
 | 1.19.x     | Deprecated     |
 
