@@ -7,9 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Properties;
 
 public final class NSServerUpdater extends JavaPlugin implements Listener {
@@ -23,35 +21,36 @@ public final class NSServerUpdater extends JavaPlugin implements Listener {
     private String jarVersion;
     private String jarName;
 
+    private WatchService watchService;
+    private Thread watchThread;
+    private long lastModified = 0;
+
     @Override
     public void onEnable() {
-        // Enable and load configuration
-        getLogger().info("Configuration loaded!");
+        getLogger().info("Loading configuration...");
 
-        // Get the path to the root directory of the server
         Path serverDir = Paths.get("").toAbsolutePath();
         String configFilePath = serverDir.resolve(CONFIG_FILE_NAME).toString();
 
-        // Load or create configuration
         Properties config = loadOrCreateConfig(configFilePath);
+        applyConfig(config);
 
-        jarType = config.getProperty("jar_type", DEFAULT_JAR_TYPE);
-        jarVersion = config.getProperty("jar_version", DEFAULT_JAR_VERSION);
-        jarName = config.getProperty("save_to", DEFAULT_JAR_NAME);
-
-        // Register event listener
         getServer().getPluginManager().registerEvents(this, this);
+
+        startConfigWatcher(serverDir, configFilePath);
     }
 
     @Override
     public void onDisable() {
-        // Disable and update
-        getLogger().info("Upgrading jar..");
+        if (watchThread != null && watchThread.isAlive()) {
+            watchThread.interrupt();
+        }
 
-        // Get the path to the root directory of the server
+        getLogger().info("Upgrading jar...");
+
         Path serverDir = Paths.get("").toAbsolutePath();
         String downloadUrl = getDownloadUrl(jarType, jarVersion);
-        String fileName = serverDir.resolve(jarName +".jar").toString();
+        String fileName = serverDir.resolve(jarName + ".jar").toString();
 
         getLogger().info("Downloading " + jarType + " version " + jarVersion + "...");
 
@@ -75,9 +74,8 @@ public final class NSServerUpdater extends JavaPlugin implements Listener {
 
     private Properties loadOrCreateConfig(String configFilePath) {
         Properties config = new Properties();
-
-        // Create default config if it doesn't exist or required properties are missing
         Path configPath = Paths.get(configFilePath);
+
         if (!Files.exists(configPath)) {
             try (OutputStream output = Files.newOutputStream(configPath)) {
                 config.setProperty("0w1", "Please note - don't include .jar in the save_to input");
@@ -94,7 +92,6 @@ public final class NSServerUpdater extends JavaPlugin implements Listener {
             }
         }
 
-        // Load the config file
         try (InputStream input = Files.newInputStream(configPath)) {
             config.load(input);
         } catch (IOException e) {
@@ -104,7 +101,50 @@ public final class NSServerUpdater extends JavaPlugin implements Listener {
         return config;
     }
 
+    private void applyConfig(Properties config) {
+        jarType = config.getProperty("jar_type", DEFAULT_JAR_TYPE);
+        jarVersion = config.getProperty("jar_version", DEFAULT_JAR_VERSION);
+        jarName = config.getProperty("save_to", DEFAULT_JAR_NAME);
+    }
 
+    private void startConfigWatcher(Path serverDir, String configFilePath) {
+        try {
+            watchService = FileSystems.getDefault().newWatchService();
+            serverDir.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+            Path configPath = serverDir.resolve(CONFIG_FILE_NAME);
+            lastModified = Files.getLastModifiedTime(configPath).toMillis();
+
+            watchThread = new Thread(() -> {
+                while (!Thread.currentThread().isInterrupted()) {
+                    try {
+                        WatchKey key = watchService.take();
+                        for (WatchEvent<?> event : key.pollEvents()) {
+                            Path changed = (Path) event.context();
+                            if (changed.toString().equals(CONFIG_FILE_NAME)) {
+                                long newModified = Files.getLastModifiedTime(configPath).toMillis();
+                                if (newModified != lastModified) {
+                                    lastModified = newModified;
+
+                                    Properties newConfig = loadOrCreateConfig(configFilePath);
+                                    applyConfig(newConfig);
+
+                                    getLogger().info("Detected config change! Updated jar settings.");
+                                }
+                            }
+                        }
+                        key.reset();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (Exception e) {
+                        getLogger().warning("Error watching config file: " + e.getMessage());
+                    }
+                }
+            });
+            watchThread.start();
+        } catch (IOException e) {
+            getLogger().warning("Failed to start config file watcher: " + e.getMessage());
+        }
+    }
 
     private String getDownloadUrl(String jarType, String jarVersion) {
         if ("latest".equalsIgnoreCase(jarVersion)) {
@@ -128,7 +168,6 @@ public final class NSServerUpdater extends JavaPlugin implements Listener {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
                 totalBytesRead += bytesRead;
 
-                // Log progress every 0.3 seconds
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastLogTime >= 300) {
                     lastLogTime = currentTime;
@@ -140,7 +179,7 @@ public final class NSServerUpdater extends JavaPlugin implements Listener {
     }
 
     private String getProgressBar(int progress) {
-        int totalBars = 20;  // Total number of bars in the progress bar
+        int totalBars = 20;
         int filledBars = (progress * totalBars) / 100;
         StringBuilder progressBar = new StringBuilder("[");
         for (int i = 0; i < totalBars; i++) {
